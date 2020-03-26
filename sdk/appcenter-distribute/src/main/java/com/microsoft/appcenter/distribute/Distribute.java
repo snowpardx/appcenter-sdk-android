@@ -49,7 +49,6 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.AppLifecycleListener;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -111,7 +110,7 @@ import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 /**
  * Distribute service.
  */
-public class Distribute extends AbstractAppCenterService implements AppLifecycleListener.OnStartApplicationListener {
+public class Distribute extends AbstractAppCenterService {
 
     /**
      * Shared instance.
@@ -531,13 +530,6 @@ public class Distribute extends AbstractAppCenterService implements AppLifecycle
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void onApplicationStart() {
-        if (mChannel != null) {
-            tryResetWorkflow();
-        }
     }
 
     @Override
