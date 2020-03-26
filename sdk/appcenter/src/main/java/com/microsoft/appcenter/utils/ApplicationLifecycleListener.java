@@ -11,7 +11,7 @@ import android.support.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AppLifecycleListener implements ActivityLifecycleCallbacks {
+public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks {
 
     /**
      * The timeout used to determine an actual transition to the background.
@@ -25,7 +25,7 @@ public class AppLifecycleListener implements ActivityLifecycleCallbacks {
 
     private Handler mHandler;
 
-    private List<ActivityLifecycleCallbacks> mLifecycleCallbacks = new ArrayList<>();
+    private List<ApplicationLifecycleCallbacks> mLifecycleCallbacks = new ArrayList<>();
 
     private Runnable mDelayedPauseRunnable = new Runnable() {
         @Override
@@ -40,25 +40,25 @@ public class AppLifecycleListener implements ActivityLifecycleCallbacks {
      */
     private boolean mSubscribed;
 
-    public AppLifecycleListener(Handler handler) {
+    public ApplicationLifecycleListener(Handler handler) {
         this.mHandler = handler;
     }
 
-    public void attachToActivityLifecycleCallbacks(Application application, ActivityLifecycleCallbacks serviceInstance) {
+    public void attachToActivityLifecycleCallbacks(Application application, ActivityLifecycleCallbacks service) {
         if (!mSubscribed) {
             application.registerActivityLifecycleCallbacks(this);
             mSubscribed = true;
         }
-        mLifecycleCallbacks.add(serviceInstance);
+        if (service instanceof ApplicationLifecycleCallbacks) {
+            mLifecycleCallbacks.add((ApplicationLifecycleCallbacks) service);
+        }
     }
 
     private void started() {
         mStartedCounter++;
         if (mStartedCounter == 1 && mStopSent) {
-            for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-                if (service instanceof ApplicationLifecycleCallbacks) {
-                    ((ApplicationLifecycleCallbacks) service).onApplicationStart();
-                }
+            for (ApplicationLifecycleCallbacks service : mLifecycleCallbacks) {
+                service.onApplicationStart();
             }
             mStopSent = false;
         }
@@ -101,55 +101,34 @@ public class AppLifecycleListener implements ActivityLifecycleCallbacks {
 
     @Override
     public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
-        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-            service.onActivityCreated(activity, savedInstanceState);
-        }
     }
 
     @Override
     public void onActivityStarted(@NonNull Activity activity) {
         started();
-        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-            service.onActivityStarted(activity);
-        }
     }
 
     @Override
     public void onActivityResumed(@NonNull Activity activity) {
         resumed();
-        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-            service.onActivityResumed(activity);
-        }
     }
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
         paused();
-        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-            service.onActivityPaused(activity);
-        }
     }
 
     @Override
     public void onActivityStopped(@NonNull Activity activity) {
         stopped();
-        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-            service.onActivityStopped(activity);
-        }
     }
 
     @Override
     public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
-        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-            service.onActivitySaveInstanceState(activity, outState);
-        }
     }
 
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
-        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
-            service.onActivityDestroyed(activity);
-        }
     }
 
     public interface ApplicationLifecycleCallbacks {
