@@ -71,6 +71,10 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     public void onActivityDestroyed(Activity activity) {
     }
 
+    @Override
+    public void onApplicationStart() {
+    }
+
     /**
      * Help implementing static isEnabled() for services with future.
      *

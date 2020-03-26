@@ -44,14 +44,12 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
         this.mHandler = handler;
     }
 
-    public void attachToActivityLifecycleCallbacks(Application application, ActivityLifecycleCallbacks service) {
+    public void attachToActivityLifecycleCallbacks(Application application, ApplicationLifecycleCallbacks service) {
         if (!mSubscribed) {
             application.registerActivityLifecycleCallbacks(this);
             mSubscribed = true;
         }
-        if (service instanceof ApplicationLifecycleCallbacks) {
-            mLifecycleCallbacks.add((ApplicationLifecycleCallbacks) service);
-        }
+        mLifecycleCallbacks.add(service);
     }
 
     private void started() {
