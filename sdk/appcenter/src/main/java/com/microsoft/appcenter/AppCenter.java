@@ -30,6 +30,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppLifecycleListener;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
@@ -924,7 +925,7 @@ public class AppCenter {
             return false;
         } else {
             serviceInstance.onStarting(mAppCenterHandler);
-            mApplication.registerActivityLifecycleCallbacks(serviceInstance);
+            AppLifecycleListener.attachToActivityLifecycleCallbacks(mApplication, serviceInstance);
             mServices.add(serviceInstance);
             startedServices.add(serviceInstance);
             return true;
