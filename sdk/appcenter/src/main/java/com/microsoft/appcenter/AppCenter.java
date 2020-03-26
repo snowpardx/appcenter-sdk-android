@@ -141,6 +141,11 @@ public class AppCenter {
     private Application mApplication;
 
     /**
+     * Application lifecycle listener.
+     */
+    private AppLifecycleListener mAppLifecycleListener;
+
+    /**
      * Application secret.
      */
     private String mAppSecret;
@@ -675,6 +680,7 @@ public class AppCenter {
                 handlerAppCenterOperation(runnable, disabledRunnable);
             }
         };
+        mAppLifecycleListener = new AppLifecycleListener(mHandler);
 
         /* The rest of initialization is done in background as we need storage. */
         mServices = new HashSet<>();
@@ -925,7 +931,7 @@ public class AppCenter {
             return false;
         } else {
             serviceInstance.onStarting(mAppCenterHandler);
-            AppLifecycleListener.attachToActivityLifecycleCallbacks(mApplication, serviceInstance);
+            mAppLifecycleListener.attachToActivityLifecycleCallbacks(mApplication, serviceInstance);
             mServices.add(serviceInstance);
             startedServices.add(serviceInstance);
             return true;

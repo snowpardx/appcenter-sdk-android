@@ -2,26 +2,31 @@ package com.microsoft.appcenter.utils;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.Application.ActivityLifecycleCallbacks;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.microsoft.appcenter.AppCenterService;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class AppLifecycleListener implements Application.ActivityLifecycleCallbacks {
+public class AppLifecycleListener implements ActivityLifecycleCallbacks {
 
+    /**
+     * The timeout used to determine an actual transition to the background.
+     */
     private static final long TIMEOUT_MS = 700;
-    private static final AppLifecycleListener sInstance = new AppLifecycleListener();
+
     private int mStartedCounter = 0;
     private int mResumedCounter = 0;
     private boolean mPauseSent = true;
     private boolean mStopSent = true;
-    private Handler mHandler = new Handler();
-    private List<AppCenterService> services = new ArrayList<>();
+
+    private Handler mHandler;
+
+    private List<ActivityLifecycleCallbacks> mLifecycleCallbacks = new ArrayList<>();
+
     private Runnable mDelayedPauseRunnable = new Runnable() {
         @Override
         public void run() {
@@ -30,29 +35,29 @@ public class AppLifecycleListener implements Application.ActivityLifecycleCallba
         }
     };
 
-    private boolean subscribed;
+    /**
+     * We need to subscribe to activity lifecycle callbacks only once.
+     */
+    private boolean mSubscribed;
 
-    private AppLifecycleListener() {
+    public AppLifecycleListener(Handler handler) {
+        this.mHandler = handler;
     }
 
-    public static AppLifecycleListener getInstance() {
-        return sInstance;
-    }
-
-    public static void attachToActivityLifecycleCallbacks(Application application, AppCenterService serviceInstance) {
-        if (!sInstance.subscribed) {
-            application.registerActivityLifecycleCallbacks(sInstance);
-            sInstance.subscribed = true;
+    public void attachToActivityLifecycleCallbacks(Application application, ActivityLifecycleCallbacks serviceInstance) {
+        if (!mSubscribed) {
+            application.registerActivityLifecycleCallbacks(this);
+            mSubscribed = true;
         }
-        sInstance.services.add(serviceInstance);
+        mLifecycleCallbacks.add(serviceInstance);
     }
 
     private void started() {
         mStartedCounter++;
         if (mStartedCounter == 1 && mStopSent) {
-            for (AppCenterService service : services) {
-                if (service instanceof OnStartApplicationListener) {
-                    ((OnStartApplicationListener) service).onApplicationStart();
+            for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
+                if (service instanceof ApplicationLifecycleCallbacks) {
+                    ((ApplicationLifecycleCallbacks) service).onApplicationStart();
                 }
             }
             mStopSent = false;
@@ -96,7 +101,7 @@ public class AppLifecycleListener implements Application.ActivityLifecycleCallba
 
     @Override
     public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
-        for (AppCenterService service : services) {
+        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
             service.onActivityCreated(activity, savedInstanceState);
         }
     }
@@ -104,7 +109,7 @@ public class AppLifecycleListener implements Application.ActivityLifecycleCallba
     @Override
     public void onActivityStarted(@NonNull Activity activity) {
         started();
-        for (AppCenterService service : services) {
+        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
             service.onActivityStarted(activity);
         }
     }
@@ -112,7 +117,7 @@ public class AppLifecycleListener implements Application.ActivityLifecycleCallba
     @Override
     public void onActivityResumed(@NonNull Activity activity) {
         resumed();
-        for (AppCenterService service : services) {
+        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
             service.onActivityResumed(activity);
         }
     }
@@ -120,7 +125,7 @@ public class AppLifecycleListener implements Application.ActivityLifecycleCallba
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
         paused();
-        for (AppCenterService service : services) {
+        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
             service.onActivityPaused(activity);
         }
     }
@@ -128,26 +133,26 @@ public class AppLifecycleListener implements Application.ActivityLifecycleCallba
     @Override
     public void onActivityStopped(@NonNull Activity activity) {
         stopped();
-        for (AppCenterService service : services) {
+        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
             service.onActivityStopped(activity);
         }
     }
 
     @Override
     public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
-        for (AppCenterService service : services) {
+        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
             service.onActivitySaveInstanceState(activity, outState);
         }
     }
 
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
-        for (AppCenterService service : services) {
+        for (ActivityLifecycleCallbacks service : mLifecycleCallbacks) {
             service.onActivityDestroyed(activity);
         }
     }
 
-    public interface OnStartApplicationListener {
+    public interface ApplicationLifecycleCallbacks {
         void onApplicationStart();
     }
 }
